@@ -127,6 +127,8 @@ public class QuizActivity extends AppCompatActivity {
     private void next() {
         mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length;
         updateQuestion();
+        checkEnableAnswerButton();
+
     }
 
     private void prev() {
@@ -136,10 +138,24 @@ public class QuizActivity extends AppCompatActivity {
         }
         mCurrentIndex = i % mQuestionBank.length;
         updateQuestion();
+        checkEnableAnswerButton();
+    }
+
+    private void checkEnableAnswerButton() {
+        Question question = mQuestionBank[mCurrentIndex];
+        if (question.isAnswered()) {
+            mFalseButton.setEnabled(false);
+            mTrueButton.setEnabled(false);
+        }else {
+            mFalseButton.setEnabled(true);
+            mTrueButton.setEnabled(true);
+        }
     }
 
     private void checkAnswer(boolean userPressedTrue) {
-        boolean answerTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
+        Question question = mQuestionBank[mCurrentIndex];
+        question.setAnswered(true);
+        boolean answerTrue = question.isAnswerTrue();
         if (answerTrue == userPressedTrue) {
             Toast.makeText(this, R.string.correct_toast, Toast.LENGTH_SHORT).show();
         }else {
