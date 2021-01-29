@@ -28,6 +28,8 @@ public class QuizActivity extends AppCompatActivity {
     };
     private int mCurrentIndex = 0;
 
+    private QuizGrade mQuizGrade = new QuizGrade(mQuestionBank.length);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -146,7 +148,7 @@ public class QuizActivity extends AppCompatActivity {
         if (question.isAnswered()) {
             mFalseButton.setEnabled(false);
             mTrueButton.setEnabled(false);
-        }else {
+        } else {
             mFalseButton.setEnabled(true);
             mTrueButton.setEnabled(true);
         }
@@ -155,12 +157,20 @@ public class QuizActivity extends AppCompatActivity {
     private void checkAnswer(boolean userPressedTrue) {
         Question question = mQuestionBank[mCurrentIndex];
         question.setAnswered(true);
+        checkEnableAnswerButton();
+
         boolean answerTrue = question.isAnswerTrue();
         if (answerTrue == userPressedTrue) {
             Toast.makeText(this, R.string.correct_toast, Toast.LENGTH_SHORT).show();
-        }else {
+            mQuizGrade.incRight();
+        } else {
             Toast.makeText(this, R.string.incorrect_toast, Toast.LENGTH_SHORT).show();
         }
+        mQuizGrade.incAnswered();
+        if (mQuizGrade.isOver()) {
+            Toast.makeText(this,  mQuizGrade.calcScorePercentage() , Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     private void updateQuestion() {
