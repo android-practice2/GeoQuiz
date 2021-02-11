@@ -1,5 +1,7 @@
 package com.example.geoquiz;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -8,39 +10,65 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.geoquiz.util.SerializeUtil;
 
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = "QuizActivity";
     private static final String KEY_INDEX = "index";
+    //    private static final String KEY_IS_CHEATER = "KEY_IS_CHEATER";
+    private static final String KEY_QUESTION_BANK = "KEY_QUESTION_BANK";
+
+    private static final int REQUEST_CODE_CHEAT = 0;
     private Button mTrueButton;
     private Button mFalseButton;
+    private Button mCheatButton;
     private ImageButton mNextButton;
     private ImageButton mPrevButton;
     private TextView mQuestionTextView;
-    private final Question[] mQuestionBank = new Question[]{
-            new Question(R.string.question_australia, true),
-            new Question(R.string.question_oceans, true),
-            new Question(R.string.question_mideast, false),
-            new Question(R.string.question_africa, false),
-            new Question(R.string.question_americas, true),
-            new Question(R.string.question_asia, true),
-    };
-    private int mCurrentIndex = 0;
 
-    private QuizGrade mQuizGrade = new QuizGrade(mQuestionBank.length);
+    private Question[] mQuestionBank;
+    private int mCurrentIndex = 0;
+    private QuizGrade mQuizGrade;
+//    private boolean mIsCheater;
+
+    private void init() {
+        mQuestionBank = new Question[]{
+                new Question(R.string.question_australia, true),
+                new Question(R.string.question_oceans, true),
+                new Question(R.string.question_mideast, false),
+                new Question(R.string.question_africa, false),
+                new Question(R.string.question_americas, true),
+                new Question(R.string.question_asia, true),
+        };
+        mQuizGrade = new QuizGrade(mQuestionBank.length);
+    }
+
+    private void resume(Question[] previous) {
+        mQuestionBank = previous;
+        mQuizGrade = new QuizGrade(mQuestionBank.length);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
         Log.d(TAG, "onCreate(Bundle) called");
         if (savedInstanceState != null) {
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+//            mIsCheater = savedInstanceState.getBoolean(KEY_IS_CHEATER, false);
+            byte[] bytes = savedInstanceState.getByteArray(KEY_QUESTION_BANK);
+            Question[] previous = SerializeUtil.toObject(bytes);
+            resume(previous);
+
+        } else {
+            init();
         }
 
-        setContentView(R.layout.activity_quiz);
         mQuestionTextView = findViewById(R.id.question_text_view);
-        updateQuestion();
+        resumeQuestion();
         mQuestionTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,15 +113,45 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
+        mCheatButton = findViewById(R.id.cheat_button);
+        mCheatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = CheatActivity.newIntent(QuizActivity.this, mQuestionBank[mCurrentIndex].isAnswerTrue());
+                startActivityForResult(intent, REQUEST_CODE_CHEAT);
+
+            }
+        });
+
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            if (data == null) {
+                return;
+            }
+//            mIsCheater = CheatActivity.wasAnswerShown(data);
+            mQuestionBank[mCurrentIndex].setCheated(true);
+
+        }
+
+    }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+//        savedInstanceState.putBoolean(KEY_IS_CHEATER, mIsCheater);
+        savedInstanceState.putByteArray(KEY_QUESTION_BANK, SerializeUtil.toBytes(mQuestionBank));
+
     }
 
     @Override
@@ -160,21 +218,37 @@ public class QuizActivity extends AppCompatActivity {
         checkEnableAnswerButton();
 
         boolean answerTrue = question.isAnswerTrue();
+
+        int messageResId;
+        if (question.isCheated()) {
+            messageResId = R.string.judgment_toast;
+            Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (answerTrue == userPressedTrue) {
-            Toast.makeText(this, R.string.correct_toast, Toast.LENGTH_SHORT).show();
+            messageResId = R.string.correct_toast;
             mQuizGrade.incRight();
         } else {
-            Toast.makeText(this, R.string.incorrect_toast, Toast.LENGTH_SHORT).show();
+            messageResId = R.string.incorrect_toast;
         }
+        Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
+
         mQuizGrade.incAnswered();
         if (mQuizGrade.isOver()) {
-            Toast.makeText(this,  mQuizGrade.calcScorePercentage() , Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, mQuizGrade.calcScorePercentage(), Toast.LENGTH_SHORT).show();
         }
 
     }
 
     private void updateQuestion() {
+//        mIsCheater=false;
         mQuestionTextView.setText(mQuestionBank[mCurrentIndex].getTextResId());
+    }
+
+    private void resumeQuestion() {
+        mQuestionTextView.setText(mQuestionBank[mCurrentIndex].getTextResId());
+
     }
 
 }

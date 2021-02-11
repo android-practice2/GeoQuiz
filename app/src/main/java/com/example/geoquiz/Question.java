@@ -1,9 +1,13 @@
 package com.example.geoquiz;
 
-public class Question {
+import java.io.Serializable;
+
+public class Question implements Serializable {
     private int mTextResId;
     private boolean mAnswerTrue;
     private boolean isAnswered;
+    private boolean isCheated;
+
     public Question(int textResId, boolean answerTrue) {
         mTextResId = textResId;
         mAnswerTrue = answerTrue;
@@ -31,5 +35,13 @@ public class Question {
 
     public void setAnswered(boolean answered) {
         isAnswered = answered;
+    }
+
+    public boolean isCheated() {
+        return isCheated;
+    }
+
+    public void setCheated(boolean cheated) {
+        isCheated = cheated;
     }
 }

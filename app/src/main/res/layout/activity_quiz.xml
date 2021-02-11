@@ -37,25 +37,30 @@
                 android:text="@string/false_button" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/cheat_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cheat_button" />
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            >
+            android:orientation="horizontal">
+
             <ImageButton
                 android:id="@+id/previous_button"
                 android:layout_width="65dp"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/prev_button"
-                android:src="@drawable/arrow_left"
-                />
+                android:src="@drawable/arrow_left" />
+
             <ImageButton
                 android:id="@+id/next_button"
                 android:layout_width="64dp"
                 android:layout_height="29dp"
                 android:contentDescription="@string/next_button"
-                android:src="@drawable/arrow_right"
-                />
+                android:src="@drawable/arrow_right" />
 
 
         </LinearLayout>
