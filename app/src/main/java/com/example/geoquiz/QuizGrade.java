@@ -1,7 +1,6 @@
 package com.example.geoquiz;
 
 import java.text.NumberFormat;
-import java.util.Locale;
 
 public class QuizGrade {
     private final int total;

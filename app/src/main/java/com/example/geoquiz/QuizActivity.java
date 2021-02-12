@@ -22,19 +22,23 @@ public class QuizActivity extends AppCompatActivity {
     private static final String KEY_QUESTION_BANK = "KEY_QUESTION_BANK";
 
     private static final int REQUEST_CODE_CHEAT = 0;
+    private static final int cheatLimit = 3;
+
     private Button mTrueButton;
     private Button mFalseButton;
     private Button mCheatButton;
     private ImageButton mNextButton;
     private ImageButton mPrevButton;
     private TextView mQuestionTextView;
+    private TextView mCheatTokenRemainTextView;
 
     private Question[] mQuestionBank;
     private int mCurrentIndex = 0;
     private QuizGrade mQuizGrade;
-//    private boolean mIsCheater;
+    private int cheatCount;
 
-    private void init() {
+
+    private void initQuiz() {
         mQuestionBank = new Question[]{
                 new Question(R.string.question_australia, true),
                 new Question(R.string.question_oceans, true),
@@ -46,7 +50,7 @@ public class QuizActivity extends AppCompatActivity {
         mQuizGrade = new QuizGrade(mQuestionBank.length);
     }
 
-    private void resume(Question[] previous) {
+    private void resumeQuiz(Question[] previous) {
         mQuestionBank = previous;
         mQuizGrade = new QuizGrade(mQuestionBank.length);
     }
@@ -56,16 +60,7 @@ public class QuizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
         Log.d(TAG, "onCreate(Bundle) called");
-        if (savedInstanceState != null) {
-            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
-//            mIsCheater = savedInstanceState.getBoolean(KEY_IS_CHEATER, false);
-            byte[] bytes = savedInstanceState.getByteArray(KEY_QUESTION_BANK);
-            Question[] previous = SerializeUtil.toObject(bytes);
-            resume(previous);
-
-        } else {
-            init();
-        }
+        resumeAfterRotate(savedInstanceState);
 
         mQuestionTextView = findViewById(R.id.question_text_view);
         resumeQuestion();
@@ -76,6 +71,40 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
+        answerButton();
+
+        navButton();
+
+        cheatButton();
+
+        cheatTokenRemainTextView();
+
+    }
+
+    private void cheatTokenRemainTextView() {
+        mCheatTokenRemainTextView = findViewById(R.id.cheat_token_remain);
+
+        updateCheatRemain();
+    }
+
+    private void updateCheatRemain() {
+        String text = "cheat remain: " + (cheatLimit - cheatCount);
+        mCheatTokenRemainTextView.setText(text);
+    }
+
+    private void resumeAfterRotate(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+            byte[] bytes = savedInstanceState.getByteArray(KEY_QUESTION_BANK);
+            Question[] previous = SerializeUtil.toObject(bytes);
+            resumeQuiz(previous);
+
+        } else {
+            initQuiz();
+        }
+    }
+
+    private void answerButton() {
         mTrueButton = findViewById(R.id.true_button);
         mTrueButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,15 +118,14 @@ public class QuizActivity extends AppCompatActivity {
         mFalseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Toast toast = Toast.makeText(QuizActivity.this, R.string.incorrect_toast, Toast.LENGTH_SHORT);
-//                toast.setGravity(Gravity.TOP, 0, 0);
-//                toast.show();
 
                 checkAnswer(false);
 
             }
         });
+    }
 
+    private void navButton() {
         mNextButton = findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,18 +140,26 @@ public class QuizActivity extends AppCompatActivity {
                 prev();
             }
         });
+    }
 
+    private void cheatButton() {
         mCheatButton = findViewById(R.id.cheat_button);
         mCheatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                cheatCount++;
+                updateCheatRemain();
                 Intent intent = CheatActivity.newIntent(QuizActivity.this, mQuestionBank[mCurrentIndex].isAnswerTrue());
                 startActivityForResult(intent, REQUEST_CODE_CHEAT);
-
+                checkCheatTokenRemain();
             }
         });
+    }
 
-
+    private void checkCheatTokenRemain() {
+        if (cheatCount >= cheatLimit) {
+            mCheatButton.setEnabled(false);
+        }
     }
 
     @Override

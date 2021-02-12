@@ -31,5 +31,11 @@
             android:layout_height="wrap_content"
             android:text="@string/show_answer_button" />
 
+        <TextView
+            android:id="@+id/api_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            tools:text="API Level 25" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
